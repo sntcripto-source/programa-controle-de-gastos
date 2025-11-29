@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Gastos Pessoais</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>💰 Controle de Gastos</h1>
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="app.exportData()">📥 Exportar</button>
+                <button class="btn-secondary" onclick="app.importData()">📤 Importar</button>
+            </div>
+        </header>
+
+        <!-- Dashboard Summary -->
+        <section class="dashboard">
+            <div class="stat-card">
+                <div class="stat-icon">💸</div>
+                <div class="stat-content">
+                    <h3>Gastos Totais</h3>
+                    <p class="stat-value" id="total-expenses">R$ 0,00</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-content">
+                    <h3>Gastos Fixos/Mês</h3>
+                    <p class="stat-value" id="fixed-monthly">R$ 0,00</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🚗</div>
+                <div class="stat-content">
+                    <h3>Gastos com Carro</h3>
+                    <p class="stat-value" id="car-total">R$ 0,00</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-content">
+                    <h3>Empréstimos</h3>
+                    <p class="stat-value" id="loans-balance">R$ 0,00</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab Navigation -->
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="app.switchTab('loans')">
+                <span class="tab-icon">💳</span>
+                Empréstimos
+            </button>
+            <button class="tab-btn" onclick="app.switchTab('fixed')">
+                <span class="tab-icon">📋</span>
+                Gastos Fixos
+            </button>
+            <button class="tab-btn" onclick="app.switchTab('car')">
+                <span class="tab-icon">🚗</span>
+                Carro
+            </button>
+            <button class="tab-btn" onclick="app.switchTab('general')">
+                <span class="tab-icon">🛒</span>
+                Gastos Gerais
+            </button>
+        </nav>
+
+        <!-- Empréstimos Tab -->
+        <section id="loans-tab" class="tab-content active">
+            <div class="content-grid">
+                <div class="form-card">
+                    <h2>Adicionar Empréstimo</h2>
+                    <form id="loan-form" onsubmit="app.addLoan(event)">
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <input type="text" name="description" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Valor da Parcela (R$)</label>
+                                <input type="number" name="amount" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select name="type" required>
+                                    <option value="borrowed">Emprestado (Devo)</option>
+                                    <option value="lent">Emprestei</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Taxa de Juros (%)</label>
+                                <input type="number" name="interest" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Vencimento</label>
+                                <input type="date" name="dueDate">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status" required>
+                                <option value="pending">Pendente</option>
+                                <option value="paid">Pago</option>
+                                <option value="overdue">Atrasado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" name="isInstallment" id="loan-installment-check"
+                                    onchange="app.toggleInstallmentFields('loan')">
+                                Parcelar?
+                            </label>
+                        </div>
+                        <div id="loan-installment-fields" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Número de Parcelas</label>
+                                    <input type="number" name="installments" min="2" max="120" value="12">
+                                </div>
+                                <div class="form-group">
+                                    <label>Data de Início</label>
+                                    <input type="date" name="installmentStartDate">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Adicionar</button>
+                    </form>
+                </div>
+                <div class="list-card">
+                    <h2>Empréstimos</h2>
+                    <div id="loans-list" class="items-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gastos Fixos Tab -->
+        <section id="fixed-tab" class="tab-content">
+            <div class="content-grid">
+                <div class="form-card">
+                    <h2>Adicionar Gasto Fixo</h2>
+                    <form id="fixed-form" onsubmit="app.addFixed(event)">
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <input type="text" name="description" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Valor Mensal (R$)</label>
+                                <input type="number" name="amount" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select name="category" required>
+                                    <option value="rent">Aluguel</option>
+                                    <option value="internet">Internet</option>
+                                    <option value="phone">Telefone</option>
+                                    <option value="utilities">Contas (Água/Luz/Gás)</option>
+                                    <option value="subscription">Assinaturas</option>
+                                    <option value="other">Outros</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Dia do Vencimento</label>
+                            <input type="number" name="dueDay" min="1" max="31" required>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" name="isInstallment" id="fixed-installment-check"
+                                    onchange="app.toggleInstallmentFields('fixed')">
+                                Parcelar?
+                            </label>
+                        </div>
+                        <div id="fixed-installment-fields" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Número de Parcelas</label>
+                                    <input type="number" name="installments" min="2" max="120" value="12">
+                                </div>
+                                <div class="form-group">
+                                    <label>Data de Início</label>
+                                    <input type="date" name="installmentStartDate">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Adicionar</button>
+                    </form>
+                </div>
+                <div class="list-card">
+                    <h2>Gastos Fixos Mensais</h2>
+                    <div id="fixed-list" class="items-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Carro Tab -->
+        <section id="car-tab" class="tab-content">
+            <div class="content-grid">
+                <div class="form-card">
+                    <h2>Adicionar Gasto com Carro</h2>
+                    <form id="car-form" onsubmit="app.addCar(event)">
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <input type="text" name="description" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Valor (R$)</label>
+                                <input type="number" name="amount" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select name="category" required>
+                                    <option value="fuel">Combustível</option>
+                                    <option value="maintenance">Manutenção</option>
+                                    <option value="insurance">Seguro</option>
+                                    <option value="taxes">Impostos</option>
+                                    <option value="repairs">Reparos</option>
+                                    <option value="other">Outros</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Data</label>
+                                <input type="date" name="date" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Quilometragem (opcional)</label>
+                                <input type="number" name="mileage">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" name="isInstallment" id="car-installment-check"
+                                    onchange="app.toggleInstallmentFields('car')">
+                                Parcelar?
+                            </label>
+                        </div>
+                        <div id="car-installment-fields" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Número de Parcelas</label>
+                                    <input type="number" name="installments" min="2" max="120" value="12">
+                                </div>
+                                <div class="form-group">
+                                    <label>Mês de Início (opcional)</label>
+                                    <input type="month" name="installmentStartMonth">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Adicionar</button>
+                    </form>
+                </div>
+                <div class="list-card">
+                    <h2>Histórico de Gastos</h2>
+                    <div id="car-list" class="items-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gastos Gerais Tab -->
+        <section id="general-tab" class="tab-content">
+            <div class="content-grid">
+                <div class="form-card">
+                    <h2>Adicionar Gasto Geral</h2>
+                    <form id="general-form" onsubmit="app.addGeneral(event)">
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <input type="text" name="description" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Valor (R$)</label>
+                                <input type="number" name="amount" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select name="category" required>
+                                    <option value="food">Alimentação</option>
+                                    <option value="transport">Transporte</option>
+                                    <option value="health">Saúde</option>
+                                    <option value="entertainment">Lazer</option>
+                                    <option value="education">Educação</option>
+                                    <option value="clothing">Vestuário</option>
+                                    <option value="shopping">Compras</option>
+                                    <option value="other">Outros</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Data</label>
+                            <input type="date" name="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" name="isInstallment" id="general-installment-check"
+                                    onchange="app.toggleInstallmentFields('general')">
+                                Parcelar?
+                            </label>
+                        </div>
+                        <div id="general-installment-fields" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Número de Parcelas</label>
+                                    <input type="number" name="installments" min="2" max="120" value="12">
+                                </div>
+                                <div class="form-group">
+                                    <label>Mês de Início (opcional)</label>
+                                    <input type="month" name="installmentStartMonth">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Adicionar</button>
+                    </form>
+                </div>
+                <div class="list-card">
+                    <h2>Histórico de Gastos</h2>
+                    <div class="filter-bar">
+                        <select id="month-filter" onchange="app.filterGeneral()">
+                            <option value="">Todos os Meses</option>
+                        </select>
+                    </div>
+                    <div id="general-list" class="items-list"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="app.handleImport(event)">
+
+    <script src="script.js"></script>
+</body>
+
+</html>
