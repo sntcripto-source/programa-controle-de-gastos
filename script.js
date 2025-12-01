@@ -561,8 +561,14 @@ const app = {
         // Car expenses
         const carTotal = this.data.car.reduce((sum, item) => sum + item.amount, 0);
 
-        // General expenses
-        const generalTotal = this.data.general.reduce((sum, item) => sum + item.amount, 0);
+        // General expenses - CURRENT MONTH ONLY
+        const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM format
+        const generalTotal = this.data.general
+            .filter(item => {
+                const itemMonth = item.installmentDate ? item.installmentDate.substring(0, 7) : item.date.substring(0, 7);
+                return itemMonth === currentMonth;
+            })
+            .reduce((sum, item) => sum + item.amount, 0);
 
         // Fixed monthly expenses
         const fixedMonthly = this.data.fixed.reduce((sum, item) => sum + item.amount, 0);
@@ -588,15 +594,16 @@ const app = {
             return sum + (loan.type === 'borrowed' ? -amount : amount);
         }, 0);
 
-        // Total expenses = fixed + car + loans (absolute value)
+        // Total expenses = fixed + car + loans (absolute value) + general
         // Note: We use Math.abs for loans to count debts as expenses
-        const totalExpenses = fixedMonthly + carTotal + Math.abs(loansBalance);
+        const totalExpenses = fixedMonthly + carTotal + generalTotal + Math.abs(loansBalance);
 
         document.getElementById('total-expenses').textContent = `R$ ${totalExpenses.toFixed(2)}`;
         document.getElementById('fixed-monthly').textContent = `R$ ${fixedMonthly.toFixed(2)}`;
         document.getElementById('car-total').textContent = `R$ ${carTotal.toFixed(2)}`;
         document.getElementById('loans-balance').textContent = `R$ ${Math.abs(loansBalance).toFixed(2)}`;
         document.getElementById('loans-balance').style.color = loansBalance >= 0 ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('general-total').textContent = `R$ ${generalTotal.toFixed(2)}`;
     },
 
     // Render all
