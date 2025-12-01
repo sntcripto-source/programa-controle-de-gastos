@@ -143,6 +143,11 @@
                 </div>
                 <div class="list-card">
                     <h2>Empréstimos</h2>
+                    <div class="filter-bar">
+                        <select id="loans-month-filter" onchange="app.filterLoans()">
+                            <option value="">Todos os Meses</option>
+                        </select>
+                    </div>
                     <div id="loans-list" class="items-list"></div>
                 </div>
             </div>
@@ -203,6 +208,11 @@
                 </div>
                 <div class="list-card">
                     <h2>Gastos Fixos Mensais</h2>
+                    <div class="filter-bar">
+                        <select id="fixed-month-filter" onchange="app.filterFixed()">
+                            <option value="">Todos os Meses</option>
+                        </select>
+                    </div>
                     <div id="fixed-list" class="items-list"></div>
                 </div>
             </div>
@@ -269,6 +279,11 @@
                 </div>
                 <div class="list-card">
                     <h2>Histórico de Gastos</h2>
+                    <div class="filter-bar">
+                        <select id="car-month-filter" onchange="app.filterCar()">
+                            <option value="">Todos os Meses</option>
+                        </select>
+                    </div>
                     <div id="car-list" class="items-list"></div>
                 </div>
             </div>
@@ -332,7 +347,7 @@
                 <div class="list-card">
                     <h2>Histórico de Gastos</h2>
                     <div class="filter-bar">
-                        <select id="month-filter" onchange="app.filterGeneral()">
+                        <select id="general-month-filter" onchange="app.filterGeneral()">
                             <option value="">Todos os Meses</option>
                         </select>
                     </div>

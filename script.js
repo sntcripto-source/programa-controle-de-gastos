@@ -13,7 +13,7 @@ const app = {
         this.loadData();
         this.renderAll();
         this.updateDashboard();
-        this.populateMonthFilter();
+        this.populateAllMonthFilters();
 
         // Set default date inputs to today
         const today = new Date().toISOString().split('T')[0];
@@ -195,15 +195,25 @@ const app = {
         this.saveData();
         this.renderLoans();
         this.updateDashboard();
+        this.populateAllMonthFilters();
         form.reset();
         // Reset installment fields visibility
         document.getElementById('loan-installment-fields').style.display = 'none';
     },
 
-    renderLoans() {
+    renderLoans(filterMonth = '') {
         const container = document.getElementById('loans-list');
 
-        if (this.data.loans.length === 0) {
+        let filtered = this.data.loans;
+
+        if (filterMonth) {
+            filtered = this.data.loans.filter(item => {
+                const itemMonth = item.dueDate ? item.dueDate.substring(0, 7) : (item.installmentDate || '').substring(0, 7);
+                return itemMonth === filterMonth;
+            });
+        }
+
+        if (filtered.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">💳</div>
@@ -214,12 +224,12 @@ const app = {
         }
 
         // Get monthly totals
-        const monthlyData = this.getMonthlyTotals(this.data.loans, 'loans');
+        const monthlyData = this.getMonthlyTotals(filtered, 'loans');
 
         container.innerHTML = `
             ${this.renderMonthlySummary(monthlyData)}
             <div class="items-list-wrapper">
-                ${this.data.loans.map(loan => {
+                ${filtered.map(loan => {
             // Show the installment/parcel value
             const displayAmount = loan.amount;
             const isPositive = loan.type === 'lent';
@@ -281,14 +291,24 @@ const app = {
         this.saveData();
         this.renderFixed();
         this.updateDashboard();
+        this.populateAllMonthFilters();
         form.reset();
         document.getElementById('fixed-installment-fields').style.display = 'none';
     },
 
-    renderFixed() {
+    renderFixed(filterMonth = '') {
         const container = document.getElementById('fixed-list');
 
-        if (this.data.fixed.length === 0) {
+        let filtered = this.data.fixed;
+
+        if (filterMonth) {
+            filtered = this.data.fixed.filter(item => {
+                const itemMonth = item.installmentDate ? item.installmentDate.substring(0, 7) : '';
+                return itemMonth === filterMonth;
+            });
+        }
+
+        if (filtered.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">📋</div>
@@ -298,13 +318,13 @@ const app = {
             return;
         }
 
-        const total = this.data.fixed.reduce((sum, item) => sum + item.amount, 0);
-        const monthlyData = this.getMonthlyTotals(this.data.fixed, 'fixed');
+        const total = filtered.reduce((sum, item) => sum + item.amount, 0);
+        const monthlyData = this.getMonthlyTotals(filtered, 'fixed');
 
         container.innerHTML = `
             ${this.renderMonthlySummary(monthlyData)}
             <div class="items-list-wrapper">
-                ${this.data.fixed.map(item => `
+                ${filtered.map(item => `
                     <div class="item">
                         <div class="item-header">
                             <span class="item-title">${item.description}</span>
@@ -367,14 +387,24 @@ const app = {
         this.saveData();
         this.renderCar();
         this.updateDashboard();
+        this.populateAllMonthFilters();
         form.reset();
         document.getElementById('car-installment-fields').style.display = 'none';
     },
 
-    renderCar() {
+    renderCar(filterMonth = '') {
         const container = document.getElementById('car-list');
 
-        if (this.data.car.length === 0) {
+        let filtered = this.data.car;
+
+        if (filterMonth) {
+            filtered = this.data.car.filter(item => {
+                const itemMonth = item.date ? item.date.substring(0, 7) : (item.installmentDate || '').substring(0, 7);
+                return itemMonth === filterMonth;
+            });
+        }
+
+        if (filtered.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">🚗</div>
@@ -385,8 +415,8 @@ const app = {
         }
 
         // Sort by date descending
-        const sorted = [...this.data.car].sort((a, b) => new Date(b.date) - new Date(a.date));
-        const monthlyData = this.getMonthlyTotals(this.data.car, 'car');
+        const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const monthlyData = this.getMonthlyTotals(filtered, 'car');
 
         container.innerHTML = `
             ${this.renderMonthlySummary(monthlyData)}
@@ -448,7 +478,7 @@ const app = {
         this.saveData();
         this.renderGeneral();
         this.updateDashboard();
-        this.populateMonthFilter();
+        this.populateAllMonthFilters();
         form.reset();
         document.getElementById('general-installment-fields').style.display = 'none';
     },
@@ -525,17 +555,40 @@ const app = {
         `;
     },
 
+    filterLoans() {
+        const select = document.getElementById('loans-month-filter');
+        this.renderLoans(select.value);
+    },
+
+    filterFixed() {
+        const select = document.getElementById('fixed-month-filter');
+        this.renderFixed(select.value);
+    },
+
+    filterCar() {
+        const select = document.getElementById('car-month-filter');
+        this.renderCar(select.value);
+    },
+
     filterGeneral() {
-        const select = document.getElementById('month-filter');
+        const select = document.getElementById('general-month-filter');
         this.renderGeneral(select.value);
     },
 
-    populateMonthFilter() {
-        const select = document.getElementById('month-filter');
+    populateMonthFilter(selectId, dataArray, dateField = 'date') {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
         const months = new Set();
 
-        this.data.general.forEach(item => {
-            months.add(item.date.substring(0, 7));
+        dataArray.forEach(item => {
+            let monthKey = '';
+            if (item.installmentDate) {
+                monthKey = item.installmentDate.substring(0, 7);
+            } else if (item[dateField]) {
+                monthKey = item[dateField].substring(0, 7);
+            }
+            if (monthKey) months.add(monthKey);
         });
 
         const sortedMonths = Array.from(months).sort().reverse();
@@ -544,6 +597,13 @@ const app = {
             sortedMonths.map(month =>
                 `<option value="${month}">${this.formatMonthYear(month)}</option>`
             ).join('');
+    },
+
+    populateAllMonthFilters() {
+        this.populateMonthFilter('loans-month-filter', this.data.loans, 'dueDate');
+        this.populateMonthFilter('fixed-month-filter', this.data.fixed, 'date');
+        this.populateMonthFilter('car-month-filter', this.data.car, 'date');
+        this.populateMonthFilter('general-month-filter', this.data.general, 'date');
     },
 
     // Delete item
@@ -644,7 +704,7 @@ const app = {
                     this.saveData();
                     this.renderAll();
                     this.updateDashboard();
-                    this.populateMonthFilter();
+                    this.populateAllMonthFilters();
                     alert('Dados importados com sucesso!');
                 }
             } catch (error) {
