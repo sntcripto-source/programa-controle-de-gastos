@@ -252,6 +252,7 @@ const app = {
                             </div>
                             <div class="item-actions">
                                 <button class="btn-danger" onclick="app.deleteItem('loans', ${loan.id})">Excluir</button>
+                                ${loan.isInstallment ? `<button class="btn-secondary" onclick="app.deleteInstallmentGroup('loans', ${loan.parentId})" style="margin-left: 8px; background-color: #6b7280;">Excluir Grupo</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -338,6 +339,7 @@ const app = {
                         </div>
                         <div class="item-actions">
                             <button class="btn-danger" onclick="app.deleteItem('fixed', ${item.id})">Excluir</button>
+                            ${item.isInstallment ? `<button class="btn-secondary" onclick="app.deleteInstallmentGroup('fixed', ${item.parentId})" style="margin-left: 8px; background-color: #6b7280;">Excluir Grupo</button>` : ''}
                         </div>
                     </div>
                 `).join('')}
@@ -436,6 +438,7 @@ const app = {
                         </div>
                         <div class="item-actions">
                             <button class="btn-danger" onclick="app.deleteItem('car', ${item.id})">Excluir</button>
+                            ${item.isInstallment ? `<button class="btn-secondary" onclick="app.deleteInstallmentGroup('car', ${item.parentId})" style="margin-left: 8px; background-color: #6b7280;">Excluir Grupo</button>` : ''}
                         </div>
                     </div>
                 `).join('')}
@@ -545,6 +548,7 @@ const app = {
                                     </div>
                                     <div class="item-actions">
                                         <button class="btn-danger" onclick="app.deleteItem('general', ${item.id})">Excluir</button>
+                                        ${item.isInstallment ? `<button class="btn-secondary" onclick="app.deleteInstallmentGroup('general', ${item.parentId})" style="margin-left: 8px; background-color: #6b7280;">Excluir Grupo</button>` : ''}
                                     </div>
                                 </div>
                             `).join('')}
@@ -616,13 +620,38 @@ const app = {
         this.updateDashboard();
     },
 
+    // Delete installment group
+    deleteInstallmentGroup(category, parentId) {
+        // Find all items in the group
+        const groupItems = this.data[category].filter(item => item.parentId === parentId);
+
+        if (groupItems.length === 0) return;
+
+        if (!confirm(`Tem certeza que deseja excluir todas as ${groupItems.length} parcelas deste grupo?`)) return;
+
+        // Remove all items with the same parentId
+        this.data[category] = this.data[category].filter(item => item.parentId !== parentId);
+
+        this.saveData();
+        this.renderAll();
+        this.updateDashboard();
+        this.populateAllMonthFilters();
+    },
+
     // Update dashboard
     updateDashboard() {
-        // Car expenses
-        const carTotal = this.data.car.reduce((sum, item) => sum + item.amount, 0);
+        // CURRENT MONTH for filtering
+        const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM format
+
+        // Car expenses - CURRENT MONTH ONLY
+        const carTotal = this.data.car
+            .filter(item => {
+                const itemMonth = item.date ? item.date.substring(0, 7) : (item.installmentDate || '').substring(0, 7);
+                return itemMonth === currentMonth;
+            })
+            .reduce((sum, item) => sum + item.amount, 0);
 
         // General expenses - CURRENT MONTH ONLY
-        const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM format
         const generalTotal = this.data.general
             .filter(item => {
                 const itemMonth = item.installmentDate ? item.installmentDate.substring(0, 7) : item.date.substring(0, 7);
