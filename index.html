@@ -147,6 +147,8 @@
                         <select id="loans-month-filter" onchange="app.filterLoans()">
                             <option value="">Todos os Meses</option>
                         </select>
+                        <button class="btn-danger" onclick="app.deleteMonthData('loans')" style="margin-left: 8px;">🗑️
+                            Excluir Mês</button>
                     </div>
                     <div id="loans-list" class="items-list"></div>
                 </div>
@@ -283,6 +285,8 @@
                         <select id="car-month-filter" onchange="app.filterCar()">
                             <option value="">Todos os Meses</option>
                         </select>
+                        <button class="btn-danger" onclick="app.deleteMonthData('car')" style="margin-left: 8px;">🗑️
+                            Excluir Mês</button>
                     </div>
                     <div id="car-list" class="items-list"></div>
                 </div>
@@ -350,6 +354,8 @@
                         <select id="general-month-filter" onchange="app.filterGeneral()">
                             <option value="">Todos os Meses</option>
                         </select>
+                        <button class="btn-danger" onclick="app.deleteMonthData('general')"
+                            style="margin-left: 8px;">🗑️ Excluir Mês</button>
                     </div>
                     <div id="general-list" class="items-list"></div>
                 </div>

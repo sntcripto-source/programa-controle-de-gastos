@@ -638,6 +638,76 @@ const app = {
         this.populateAllMonthFilters();
     },
 
+    // Delete all data from a specific month
+    deleteMonthData(category) {
+        const filterSelectors = {
+            loans: 'loans-month-filter',
+            fixed: 'fixed-month-filter',
+            car: 'car-month-filter',
+            general: 'general-month-filter'
+        };
+
+        const select = document.getElementById(filterSelectors[category]);
+        const selectedMonth = select.value;
+
+        if (!selectedMonth) {
+            alert('Por favor, selecione um mês para excluir.');
+            return;
+        }
+
+        // Count items in the selected month
+        let itemsToDelete = [];
+
+        this.data[category].forEach(item => {
+            let itemMonth = '';
+
+            // Determine the month based on category and item properties
+            if (item.installmentDate) {
+                itemMonth = item.installmentDate.substring(0, 7);
+            } else if (category === 'loans' && item.dueDate) {
+                itemMonth = item.dueDate.substring(0, 7);
+            } else if (item.date) {
+                itemMonth = item.date.substring(0, 7);
+            }
+
+            if (itemMonth === selectedMonth) {
+                itemsToDelete.push(item);
+            }
+        });
+
+        if (itemsToDelete.length === 0) {
+            alert('Nenhum registro encontrado para este mês.');
+            return;
+        }
+
+        const monthFormatted = this.formatMonthYear(selectedMonth);
+        if (!confirm(`Tem certeza que deseja excluir TODOS os ${itemsToDelete.length} registros de ${monthFormatted}?\n\nEsta ação não pode ser desfeita!`)) {
+            return;
+        }
+
+        // Remove items from the selected month
+        this.data[category] = this.data[category].filter(item => {
+            let itemMonth = '';
+
+            if (item.installmentDate) {
+                itemMonth = item.installmentDate.substring(0, 7);
+            } else if (category === 'loans' && item.dueDate) {
+                itemMonth = item.dueDate.substring(0, 7);
+            } else if (item.date) {
+                itemMonth = item.date.substring(0, 7);
+            }
+
+            return itemMonth !== selectedMonth;
+        });
+
+        this.saveData();
+        this.renderAll();
+        this.updateDashboard();
+        this.populateAllMonthFilters();
+
+        alert(`${itemsToDelete.length} registros de ${monthFormatted} foram excluídos com sucesso!`);
+    },
+
     // Update dashboard
     updateDashboard() {
         // CURRENT MONTH for filtering
