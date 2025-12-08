@@ -14,6 +14,7 @@ const app = {
         this.renderAll();
         this.updateDashboard();
         this.populateAllMonthFilters();
+        this.populateDashboardMonthSelector();
 
         // Set default date inputs to today
         const today = new Date().toISOString().split('T')[0];
@@ -196,6 +197,7 @@ const app = {
         this.renderLoans();
         this.updateDashboard();
         this.populateAllMonthFilters();
+        this.populateDashboardMonthSelector();
         form.reset();
         // Reset installment fields visibility
         document.getElementById('loan-installment-fields').style.display = 'none';
@@ -227,6 +229,7 @@ const app = {
         const monthlyData = this.getMonthlyTotals(filtered, 'loans');
 
         container.innerHTML = `
+            ${this.createMonthButtons('loans', 'dueDate')}
             ${this.renderMonthlySummary(monthlyData)}
             <div class="items-list-wrapper">
                 ${filtered.map(loan => {
@@ -293,6 +296,7 @@ const app = {
         this.renderFixed();
         this.updateDashboard();
         this.populateAllMonthFilters();
+        this.populateDashboardMonthSelector();
         form.reset();
         document.getElementById('fixed-installment-fields').style.display = 'none';
     },
@@ -323,6 +327,7 @@ const app = {
         const monthlyData = this.getMonthlyTotals(filtered, 'fixed');
 
         container.innerHTML = `
+            ${this.createMonthButtons('fixed', 'date')}
             ${this.renderMonthlySummary(monthlyData)}
             <div class="items-list-wrapper">
                 ${filtered.map(item => `
@@ -390,6 +395,7 @@ const app = {
         this.renderCar();
         this.updateDashboard();
         this.populateAllMonthFilters();
+        this.populateDashboardMonthSelector();
         form.reset();
         document.getElementById('car-installment-fields').style.display = 'none';
     },
@@ -421,6 +427,7 @@ const app = {
         const monthlyData = this.getMonthlyTotals(filtered, 'car');
 
         container.innerHTML = `
+            ${this.createMonthButtons('car', 'date')}
             ${this.renderMonthlySummary(monthlyData)}
             <div class="items-list-wrapper">
                 ${sorted.map(item => `
@@ -482,6 +489,7 @@ const app = {
         this.renderGeneral();
         this.updateDashboard();
         this.populateAllMonthFilters();
+        this.populateDashboardMonthSelector();
         form.reset();
         document.getElementById('general-installment-fields').style.display = 'none';
     },
@@ -523,6 +531,7 @@ const app = {
         });
 
         container.innerHTML = `
+            ${this.createMonthButtons('general', 'date')}
             ${this.renderMonthlySummary(monthlyData)}
             <div class="items-list-wrapper">
                 ${Object.keys(grouped).map(month => {
@@ -608,6 +617,81 @@ const app = {
         this.populateMonthFilter('fixed-month-filter', this.data.fixed, 'date');
         this.populateMonthFilter('car-month-filter', this.data.car, 'date');
         this.populateMonthFilter('general-month-filter', this.data.general, 'date');
+    },
+
+    // Get available months for a category
+    getAvailableMonths(dataArray, dateField = 'date') {
+        const months = new Set();
+
+        dataArray.forEach(item => {
+            let monthKey = '';
+            if (item.installmentDate) {
+                monthKey = item.installmentDate.substring(0, 7);
+            } else if (item[dateField]) {
+                monthKey = item[dateField].substring(0, 7);
+            }
+            if (monthKey) months.add(monthKey);
+        });
+
+        return Array.from(months).sort().reverse();
+    },
+
+    // Create month buttons HTML
+    createMonthButtons(category, dateField = 'date') {
+        const dataArray = this.data[category];
+        const months = this.getAvailableMonths(dataArray, dateField);
+
+        if (months.length === 0) return '';
+
+        const currentFilter = document.getElementById(`${category}-month-filter`)?.value || '';
+
+        return `
+            <div class="month-buttons-container" style="margin-bottom: 16px;">
+                <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 8px; font-weight: 500;">
+                    📅 Filtrar por mês:
+                </div>
+                <div class="month-buttons">
+                    <button 
+                        class="month-btn ${currentFilter === '' ? 'active' : ''}" 
+                        onclick="app.selectMonth('${category}', '')"
+                        style="padding: 8px 16px; background: ${currentFilter === '' ? 'var(--accent-1)' : 'var(--surface-2)'}; color: ${currentFilter === '' ? 'white' : 'var(--text-primary)'}; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.875rem; margin: 4px; transition: all 0.2s;">
+                        Todos
+                    </button>
+                    ${months.slice(0, 6).map(month => `
+                        <button 
+                            class="month-btn ${currentFilter === month ? 'active' : ''}" 
+                            onclick="app.selectMonth('${category}', '${month}')"
+                            style="padding: 8px 16px; background: ${currentFilter === month ? 'var(--accent-1)' : 'var(--surface-2)'}; color: ${currentFilter === month ? 'white' : 'var(--text-primary)'}; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.875rem; margin: 4px; transition: all 0.2s; white-space: nowrap;">
+                            ${this.formatMonthYear(month)}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    // Select month by clicking button
+    selectMonth(category, month) {
+        const select = document.getElementById(`${category}-month-filter`);
+        if (select) {
+            select.value = month;
+        }
+
+        // Call appropriate filter function
+        switch (category) {
+            case 'loans':
+                this.renderLoans(month);
+                break;
+            case 'fixed':
+                this.renderFixed(month);
+                break;
+            case 'car':
+                this.renderCar(month);
+                break;
+            case 'general':
+                this.renderGeneral(month);
+                break;
+        }
     },
 
     // Delete item
@@ -709,23 +793,25 @@ const app = {
     },
 
     // Update dashboard
-    updateDashboard() {
-        // CURRENT MONTH for filtering
-        const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM format
+    updateDashboard(selectedMonth = null) {
+        // Use selected month from filter, or current month if no filter
+        const filterMonth = selectedMonth || new Date().toISOString().substring(0, 7);
 
-        // Car expenses - CURRENT MONTH ONLY
+        // Car expenses - FILTERED MONTH
         const carTotal = this.data.car
             .filter(item => {
+                if (!selectedMonth) return true; // Show all if no filter
                 const itemMonth = item.date ? item.date.substring(0, 7) : (item.installmentDate || '').substring(0, 7);
-                return itemMonth === currentMonth;
+                return itemMonth === filterMonth;
             })
             .reduce((sum, item) => sum + item.amount, 0);
 
-        // General expenses - CURRENT MONTH ONLY
+        // General expenses - FILTERED MONTH
         const generalTotal = this.data.general
             .filter(item => {
+                if (!selectedMonth) return true; // Show all if no filter
                 const itemMonth = item.installmentDate ? item.installmentDate.substring(0, 7) : item.date.substring(0, 7);
-                return itemMonth === currentMonth;
+                return itemMonth === filterMonth;
             })
             .reduce((sum, item) => sum + item.amount, 0);
 
@@ -804,6 +890,7 @@ const app = {
                     this.renderAll();
                     this.updateDashboard();
                     this.populateAllMonthFilters();
+                    this.populateDashboardMonthSelector();
                     alert('Dados importados com sucesso!');
                 }
             } catch (error) {
@@ -860,6 +947,301 @@ const app = {
             other: 'Outros'
         };
         return labels[category] || category;
+    },
+
+    // Populate dashboard month selector with all available months
+    populateDashboardMonthSelector() {
+        const select = document.getElementById('dashboard-month-selector');
+        if (!select) return;
+
+        const months = new Set();
+
+        // Collect months from all categories
+        [...this.data.loans, ...this.data.fixed, ...this.data.car, ...this.data.general].forEach(item => {
+            let monthKey = '';
+
+            if (item.installmentDate) {
+                monthKey = item.installmentDate.substring(0, 7);
+            } else if (item.dueDate) {
+                monthKey = item.dueDate.substring(0, 7);
+            } else if (item.date) {
+                monthKey = item.date.substring(0, 7);
+            }
+
+            if (monthKey) months.add(monthKey);
+        });
+
+        const sortedMonths = Array.from(months).sort().reverse();
+
+        select.innerHTML = '<option value="">Selecione um mês</option>' +
+            sortedMonths.map(month =>
+                `<option value="${month}">${this.formatMonthYear(month)}</option>`
+            ).join('');
+    },
+
+    // Calculate and display total expenses for selected month
+    updateMonthlyTotal() {
+        const select = document.getElementById('dashboard-month-selector');
+        const display = document.getElementById('monthly-total-display');
+
+        if (!select || !display) return;
+
+        const selectedMonth = select.value;
+
+        if (!selectedMonth) {
+            display.textContent = 'R$ 0,00';
+            // Reset all filters to show all months
+            const loansFilter = document.getElementById('loans-month-filter');
+            const fixedFilter = document.getElementById('fixed-month-filter');
+            const carFilter = document.getElementById('car-month-filter');
+            const generalFilter = document.getElementById('general-month-filter');
+
+            if (loansFilter) loansFilter.value = '';
+            if (fixedFilter) fixedFilter.value = '';
+            if (carFilter) carFilter.value = '';
+            if (generalFilter) generalFilter.value = '';
+
+            // Re-render all tabs
+            this.renderLoans('');
+            this.renderFixed('');
+            this.renderCar('');
+            this.renderGeneral('');
+            return;
+        }
+
+        let total = 0;
+
+        // Calculate loans for the month
+        this.data.loans.forEach(loan => {
+            const itemMonth = loan.installmentDate
+                ? loan.installmentDate.substring(0, 7)
+                : (loan.dueDate ? loan.dueDate.substring(0, 7) : '');
+
+            if (itemMonth === selectedMonth) {
+                // For borrowed loans, count as expense (negative becomes positive)
+                if (loan.type === 'borrowed') {
+                    total += loan.amount;
+                }
+            }
+        });
+
+        // Calculate fixed expenses for the month
+        // Only count fixed expenses that have a specific month assigned
+        this.data.fixed.forEach(item => {
+            if (item.installmentDate) {
+                const itemMonth = item.installmentDate.substring(0, 7);
+                if (itemMonth === selectedMonth) {
+                    total += item.amount;
+                }
+            }
+            // Regular fixed expenses without installmentDate are not counted here
+            // as they don't have a specific month reference
+        });
+
+        // Calculate car expenses for the month
+        this.data.car.forEach(item => {
+            let itemMonth = '';
+
+            if (item.installmentDate) {
+                itemMonth = item.installmentDate.substring(0, 7);
+            } else if (item.date) {
+                itemMonth = item.date.substring(0, 7);
+            }
+
+            if (itemMonth && itemMonth === selectedMonth) {
+                total += item.amount;
+            }
+        });
+
+        // Calculate general expenses for the month
+        this.data.general.forEach(item => {
+            let itemMonth = '';
+
+            if (item.installmentDate) {
+                itemMonth = item.installmentDate.substring(0, 7);
+            } else if (item.date) {
+                itemMonth = item.date.substring(0, 7);
+            }
+
+            if (itemMonth && itemMonth === selectedMonth) {
+                total += item.amount;
+            }
+        });
+
+        display.textContent = `R$ ${total.toFixed(2)}`;
+
+        // Sync all category filters with the selected month
+        const loansFilter = document.getElementById('loans-month-filter');
+        const fixedFilter = document.getElementById('fixed-month-filter');
+        const carFilter = document.getElementById('car-month-filter');
+        const generalFilter = document.getElementById('general-month-filter');
+
+        if (loansFilter) loansFilter.value = selectedMonth;
+        if (fixedFilter) fixedFilter.value = selectedMonth;
+        if (carFilter) carFilter.value = selectedMonth;
+        if (generalFilter) generalFilter.value = selectedMonth;
+
+        // Re-render all tabs with the selected month filter
+        this.renderLoans(selectedMonth);
+        this.renderFixed(selectedMonth);
+        this.renderCar(selectedMonth);
+        this.renderGeneral(selectedMonth);
+
+        // Update dashboard cards to show filtered month values
+        this.updateDashboard(selectedMonth);
+    },
+
+    // Open month filter modal
+    openMonthFilterModal() {
+        const modal = document.getElementById('month-filter-modal');
+        if (!modal) return;
+
+        this.populateFilterYears();
+        modal.classList.add('active');
+    },
+
+    // Close month filter modal
+    closeMonthFilterModal() {
+        const modal = document.getElementById('month-filter-modal');
+        if (!modal) return;
+
+        modal.classList.remove('active');
+    },
+
+    // Populate year options in filter
+    populateFilterYears() {
+        const yearSelect = document.getElementById('filter-year');
+        if (!yearSelect) return;
+
+        const years = new Set();
+
+        // Collect years from all categories
+        [...this.data.loans, ...this.data.fixed, ...this.data.car, ...this.data.general].forEach(item => {
+            let dateStr = '';
+
+            if (item.installmentDate) {
+                dateStr = item.installmentDate;
+            } else if (item.dueDate) {
+                dateStr = item.dueDate;
+            } else if (item.date) {
+                dateStr = item.date;
+            }
+
+            if (dateStr) {
+                const year = dateStr.substring(0, 4);
+                years.add(year);
+            }
+        });
+
+        const sortedYears = Array.from(years).sort().reverse();
+
+        yearSelect.innerHTML = '<option value="">Todos os Anos</option>' +
+            sortedYears.map(year =>
+                `<option value="${year}">${year}</option>`
+            ).join('');
+    },
+
+    // Apply month and year filter
+    applyMonthYearFilter() {
+        const monthSelect = document.getElementById('filter-month');
+        const yearSelect = document.getElementById('filter-year');
+
+        if (!monthSelect || !yearSelect) return;
+
+        const month = monthSelect.value;
+        const year = yearSelect.value;
+
+        let filterValue = '';
+
+        if (year && month) {
+            // Both selected: "2027-10"
+            filterValue = `${year}-${month}`;
+        } else if (year && !month) {
+            // Only year selected: show all data for now
+            alert(`Selecionando todos os meses de ${year}. Por favor, selecione também um mês específico.`);
+            return;
+        } else if (!year && month) {
+            // Only month selected: show all data for now
+            alert(`Selecionando ${this.getMonthName(month)} de todos os anos. Por favor, selecione também um ano específico.`);
+            return;
+        } else {
+            // Neither selected: clear filter
+            filterValue = '';
+        }
+
+        // Update all filter dropdowns
+        const loansFilter = document.getElementById('loans-month-filter');
+        const fixedFilter = document.getElementById('fixed-month-filter');
+        const carFilter = document.getElementById('car-month-filter');
+        const generalFilter = document.getElementById('general-month-filter');
+
+        if (loansFilter) loansFilter.value = filterValue;
+        if (fixedFilter) fixedFilter.value = filterValue;
+        if (carFilter) carFilter.value = filterValue;
+        if (generalFilter) generalFilter.value = filterValue;
+
+        // Re-render all tabs
+        this.renderLoans(filterValue);
+        this.renderFixed(filterValue);
+        this.renderCar(filterValue);
+        this.renderGeneral(filterValue);
+
+        // Update dashboard cards to show filtered month values
+        this.updateDashboard(filterValue);
+
+        // Update dashboard month selector if it matches
+        const dashboardSelector = document.getElementById('dashboard-month-selector');
+        if (dashboardSelector && filterValue) {
+            dashboardSelector.value = filterValue;
+            this.updateMonthlyTotal();
+        }
+
+        this.closeMonthFilterModal();
+    },
+
+    // Clear month/year filter
+    clearMonthYearFilter() {
+        const monthSelect = document.getElementById('filter-month');
+        const yearSelect = document.getElementById('filter-year');
+
+        if (monthSelect) monthSelect.value = '';
+        if (yearSelect) yearSelect.value = '';
+
+        // Clear all filter dropdowns
+        const loansFilter = document.getElementById('loans-month-filter');
+        const fixedFilter = document.getElementById('fixed-month-filter');
+        const carFilter = document.getElementById('car-month-filter');
+        const generalFilter = document.getElementById('general-month-filter');
+
+        if (loansFilter) loansFilter.value = '';
+        if (fixedFilter) fixedFilter.value = '';
+        if (carFilter) carFilter.value = '';
+        if (generalFilter) generalFilter.value = '';
+
+        // Clear dashboard selector
+        const dashboardSelector = document.getElementById('dashboard-month-selector');
+        if (dashboardSelector) {
+            dashboardSelector.value = '';
+            this.updateMonthlyTotal();
+        }
+
+        // Re-render all tabs without filter
+        this.renderLoans('');
+        this.renderFixed('');
+        this.renderCar('');
+        this.renderGeneral('');
+
+        // Update dashboard cards to show all data (no filter)
+        this.updateDashboard();
+
+        this.closeMonthFilterModal();
+    },
+
+    // Helper: Get month name
+    getMonthName(monthNumber) {
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        return months[parseInt(monthNumber) - 1] || monthNumber;
     }
 };
 

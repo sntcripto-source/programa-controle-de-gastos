@@ -14,10 +14,51 @@
         <header class="header">
             <h1>💰 Controle de Gastos</h1>
             <div class="header-actions">
+                <button class="btn-secondary" onclick="app.openMonthFilterModal()">📅 Mês</button>
                 <button class="btn-secondary" onclick="app.exportData()">📥 Exportar</button>
                 <button class="btn-secondary" onclick="app.importData()">📤 Importar</button>
             </div>
         </header>
+
+        <!-- Month Filter Modal -->
+        <div id="month-filter-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📅 Filtrar por Mês e Ano</h2>
+                    <button class="close-btn" onclick="app.closeMonthFilterModal()">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Mês</label>
+                        <select id="filter-month">
+                            <option value="">Todos os Meses</option>
+                            <option value="01">Janeiro</option>
+                            <option value="02">Fevereiro</option>
+                            <option value="03">Março</option>
+                            <option value="04">Abril</option>
+                            <option value="05">Maio</option>
+                            <option value="06">Junho</option>
+                            <option value="07">Julho</option>
+                            <option value="08">Agosto</option>
+                            <option value="09">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ano</label>
+                        <select id="filter-year">
+                            <option value="">Todos os Anos</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-primary" onclick="app.applyMonthYearFilter()">Aplicar Filtro</button>
+                        <button class="btn-secondary" onclick="app.clearMonthYearFilter()">Limpar Filtro</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Dashboard Summary -->
         <section class="dashboard">
@@ -56,6 +97,7 @@
                     <p class="stat-value" id="general-total">R$ 0,00</p>
                 </div>
             </div>
+
         </section>
 
         <!-- Tab Navigation -->

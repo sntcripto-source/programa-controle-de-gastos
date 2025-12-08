@@ -3,6 +3,7 @@
     --primary-bg: #0f0f23;
     --secondary-bg: #1a1a2e;
     --card-bg: rgba(30, 30, 50, 0.6);
+    --surface-2: rgba(148, 163, 184, 0.1);
     --accent-1: #6366f1;
     --accent-2: #8b5cf6;
     --accent-3: #ec4899;
@@ -119,6 +120,35 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
+
+/* Month Selector Card */
+.month-selector-card .stat-content {
+    width: 100%;
+}
+
+.month-selector-card select {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(15, 15, 35, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.month-selector-card select:focus {
+    outline: none;
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.month-selector-card select:hover {
+    border-color: var(--accent-1);
+}
+
 
 /* Tabs */
 .tabs {
@@ -489,6 +519,40 @@ body {
     font-size: 0.875rem;
 }
 
+/* Month Buttons */
+.month-buttons-container {
+    background: rgba(99, 102, 241, 0.03);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.month-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.month-btn {
+    font-family: inherit;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.month-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.month-btn:active {
+    transform: translateY(0);
+}
+
+.month-btn.active {
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+}
+
 /* Custom Scrollbar */
 .items-list::-webkit-scrollbar {
     width: 8px;
@@ -524,6 +588,103 @@ body {
 .empty-state-text {
     font-size: 1.125rem;
 }
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 0;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: var(--shadow);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.modal-body {
+    padding: 28px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.modal-actions .btn-primary,
+.modal-actions .btn-secondary {
+    flex: 1;
+}
+
 
 /* Responsive */
 @media (max-width: 768px) {
